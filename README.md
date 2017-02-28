@@ -27,8 +27,7 @@ What's not available?
 - Power Consumption
 - Battery
 
-![alt tag](http://lazcad.com/content/images/beer.png)
-[Buy me a beer](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R3P4SPQ7LHXMN)  if you like what you're seeing!
+
 
 Installation (Raspberry Pi)
 ---------------------------
