@@ -55,8 +55,14 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
         self._hass = hass
         self._data_key = 'status'
         self._no_motion_since = 0
+        self._should_poll = False
         self._is_firing_motion = False
         XiaomiDevice.__init__(self, device, 'Motion Sensor', xiaomi_hub)
+
+    @property
+    def should_poll(self):
+    """Return True if entity has to be polled for state."""
+        return self._should_poll
 
     @property
     def device_class(self):
@@ -77,6 +83,7 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
 
     def parse_data(self, data):
         """Parse data sent by gateway"""
+        self._should_poll = False
         if NO_MOTION in data:  # handle push from the hub
             self._no_motion_since = data[NO_MOTION]
             self._state = False
@@ -87,18 +94,16 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
             return False
 
         if value == MOTION:
-            if not self._is_firing_motion:
-                self._is_firing_motion = True
-                self._hass.loop.create_task(self._async_delay_fire_motion())
+            self._should_poll = True
+            self._hass.bus.fire('motion', {
+                'entity_id': self.entity_id
+            })
 
             self._no_motion_since = 0
             if self._state:
                 return False
             else:
                 self._state = True
-                if POLL_MOTION:
-                    pass
-                    # self._hass.loop.create_task(self._async_poll_status())
                 return True
         elif value == NO_MOTION:
             if not self._state:
@@ -107,20 +112,10 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
                 self._state = False
                 return True
 
-    @asyncio.coroutine
-    def _async_delay_fire_motion(self):
-        self._hass.bus.fire('motion', {
-            'entity_id': self.entity_id
-        })
-
-        yield from asyncio.sleep(1)
-        self._is_firing_motion = False
-
-    @asyncio.coroutine
-    def _async_poll_status(self):
-        while self._state:
-            yield from asyncio.sleep(10)
-            self.xiaomi_hub.get_from_hub(self._sid)
+    def update(self):
+        """Update the sensor state."""
+        _LOGGER.debug('Updating xiaomi motion sensor by pulling')
+        self.xiaomi_hub.get_from_hub(self._sid)
 
 class XiaomiDoorSensor(XiaomiDevice, BinarySensorDevice):
     """Representation of a XiaomiDoorSensor."""
