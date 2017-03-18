@@ -5,58 +5,53 @@ Developed by Rave from Lazcad.com
 """
 import logging
 
-from homeassistant.helpers.entity import Entity
-from homeassistant.const import (ATTR_BATTERY_LEVEL, TEMP_CELSIUS)
+try:
+    from homeassistant.components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
+except ImportError:
+    from custom_components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
+from homeassistant.const import TEMP_CELSIUS
 
 _LOGGER = logging.getLogger(__name__)
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Perform the setup for Xiaomi devices."""
+    devices = []
+    gateways = PY_XIAOMI_GATEWAY.gateways
+    for (ip_add, gateway) in gateways.items():
+        for device in gateway.devices['sensor']:
+            if device['model'] == 'sensor_ht':
+                devices.append(XiaomiSensor(device, 'Temperature', 'temperature', gateway))
+                devices.append(XiaomiSensor(device, 'Humidity', 'humidity', gateway))
+    add_devices(devices)
 
-    XIAOMI_GATEWAYS = hass.data['XIAOMI_GATEWAYS']
-    for (ip, gateway) in XIAOMI_GATEWAYS.items():
-        for device in gateway.XIAOMI_DEVICES['sensor']:
-            model = device['model']
-            if (model == 'sensor_ht'):
-                add_devices([
-                    XiaomiSensor(device, 'Temperature', 'temperature', gateway),
-                    XiaomiSensor(device, 'Humidity', 'humidity', gateway)])
 
-class XiaomiDevice(Entity):
-    """Representation a base Xiaomi device."""
-
-    def __init__(self, device, name, xiaomi_hub):
-        """Initialize the xiaomi device."""
-        self._sid = device['sid']
-        self._name = '{}_{}'.format(name, self._sid)
-        self.parse_data(device['data'])
-        self.xiaomi_hub = xiaomi_hub
-        xiaomi_hub.XIAOMI_HA_DEVICES[self._sid].append(self)
-
-    @property
-    def name(self):
-        """Return the name of the device."""
-        return self._name
-
-    @property
-    def should_poll(self):
-        return False
-
-    def push_data(self, data):
-        return True
-
-    def parse_data(self, data):
-        return True
-
-class XiaomiSensor(XiaomiDevice, Entity):
-    """Representation of a XiaomiGenericSwitch."""
+class XiaomiSensor(XiaomiDevice):
+    """Representation of a XiaomiSensor."""
 
     def __init__(self, device, name, data_key, xiaomi_hub):
         """Initialize the XiaomiSensor."""
-        self.current_value = 0
+        self.current_value = None
         self._data_key = data_key
         self._battery = None
         XiaomiDevice.__init__(self, device, name, xiaomi_hub)
+
+    @property
+    def _is_humidity(self):
+        return self._data_key == 'humidity'
+
+    @property
+    def _is_temperature(self):
+        return self._data_key == 'temperature'
+
+    @property
+    def available(self):
+        """Return True if entity is available."""
+        if self._is_temperature and self.current_value != 100:
+            return True
+        elif self._is_humidity and self.current_value != 0:
+            return True
+
+        return False
 
     @property
     def state(self):
@@ -65,37 +60,16 @@ class XiaomiSensor(XiaomiDevice, Entity):
 
     @property
     def unit_of_measurement(self):
+        """Return the unit of measurement of this entity, if any."""
         if self._data_key == 'temperature':
             return TEMP_CELSIUS
         elif self._data_key == 'humidity':
             return '%'
 
     def parse_data(self, data):
-        if not self._data_key in data:
+        """Parse data sent by gateway"""
+        value = data.get(self._data_key)
+        if value is None:
             return False
-
-        value = data[self._data_key]
         self.current_value = int(value) / 100
         return True
-
-    def push_data(self, data):
-        """Push from Hub"""
-        if self.parse_data(data):
-            self.schedule_update_ha_state()
-
-        if 'battery' in data:
-            self._battery = data['battery']
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes."""
-        return {
-            ATTR_BATTERY_LEVEL: self._battery,
-        }
-
-    def update(self):
-        data = self.xiaomi_hub.get_from_hub(self._sid)
-        if data is None:
-            return
-        self.push_data(data)
-
