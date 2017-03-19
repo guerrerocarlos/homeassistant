@@ -8,9 +8,9 @@ import asyncio
 
 from homeassistant.components.binary_sensor import BinarySensorDevice
 try:
-    from homeassistant.components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice, POLL_MOTION)
+    from homeassistant.components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
 except ImportError:
-    from custom_components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice, POLL_MOTION)
+    from custom_components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,13 +56,13 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
         self._data_key = 'status'
         self._no_motion_since = 0
         self._should_poll = False
-        self._is_firing_motion = False
+        self._ghost_checked = False
         XiaomiDevice.__init__(self, device, 'Motion Sensor', xiaomi_hub)
 
     @property
     def should_poll(self):
-    """Return True if entity has to be polled for state."""
-        return self._should_poll
+        """Return True if entity has to be polled for state."""
+        return True
 
     @property
     def device_class(self):
@@ -87,13 +87,21 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
         if NO_MOTION in data:  # handle push from the hub
             self._no_motion_since = data[NO_MOTION]
             self._state = False
+            self._ghost_checked = False
             return True
 
         value = data.get(self._data_key)
         if value is None:
+            self._ghost_checked = False
             return False
 
         if value == MOTION:
+            if not self._ghost_checked and self.xiaomi_hub.check_ghost:
+                _LOGGER.debug('Checking for ghost')
+                self._ghost_checked = True
+                self.xiaomi_hub.get_from_hub(self._sid)
+                return False
+            self._ghost_checked = False
             self._should_poll = True
             self._hass.bus.fire('motion', {
                 'entity_id': self.entity_id
@@ -106,6 +114,7 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
                 self._state = True
                 return True
         elif value == NO_MOTION:
+            self._ghost_checked = False
             if not self._state:
                 return False
             else:
@@ -114,7 +123,9 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
 
     def update(self):
         """Update the sensor state."""
-        _LOGGER.debug('Updating xiaomi motion sensor by pulling')
+        if not self._should_poll:
+            return
+        _LOGGER.debug('Updating xiaomi motion sensor by polling')
         self.xiaomi_hub.get_from_hub(self._sid)
 
 class XiaomiDoorSensor(XiaomiDevice, BinarySensorDevice):
@@ -125,7 +136,14 @@ class XiaomiDoorSensor(XiaomiDevice, BinarySensorDevice):
         self._state = False
         self._data_key = 'status'
         self._open_since = 0
+        self._should_poll = False
+        self._ghost_checked = False
         XiaomiDevice.__init__(self, device, 'Door Window Sensor', xiaomi_hub)
+
+    @property
+    def should_poll(self):
+        """Return True if entity has to be polled for state."""
+        return True
 
     @property
     def device_class(self):
@@ -148,19 +166,28 @@ class XiaomiDoorSensor(XiaomiDevice, BinarySensorDevice):
         """Parse data sent by gateway"""
         if NO_CLOSE in data:  # handle push from the hub
             self._open_since = data[NO_CLOSE]
+            self._ghost_checked = False
             return True
 
         value = data.get(self._data_key)
         if value is None:
+            self._ghost_checked = False
             return False
 
-        if value == 'open' or value == 'no_close':
+        if value == 'open':
+            if not self._ghost_checked and self.xiaomi_hub.check_ghost:
+                _LOGGER.debug('Checking for ghost')
+                self._ghost_checked = True
+                self.xiaomi_hub.get_from_hub(self._sid)
+                return False
+            self._ghost_checked = False
             if self._state:
                 return False
             else:
                 self._state = True
                 return True
         elif value == 'close':
+            self._ghost_checked = False
             self._open_since = 0
             if self._state:
                 self._state = False
@@ -168,6 +195,12 @@ class XiaomiDoorSensor(XiaomiDevice, BinarySensorDevice):
             else:
                 return False
 
+    def update(self):
+        """Update the sensor state."""
+        if not self._should_poll:
+            return
+        _LOGGER.debug('Updating xiaomi door sensor by polling')
+        self.xiaomi_hub.get_from_hub(self._sid)
 
 class XiaomiButton(XiaomiDevice, BinarySensorDevice):
     """Representation of a Xiaomi Button."""

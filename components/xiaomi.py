@@ -22,8 +22,8 @@ REQUIREMENTS = ['pyCrypto==2.6.1']
 DOMAIN = 'xiaomi'
 CONF_GATEWAYS = 'gateways'
 CONF_INTERFACE = 'interface'
-CONF_POLL_MOTION = 'poll_motion'
 CONF_DISCOVERY_RETRY = 'discovery_retry'
+CONF_CHECK_GHOST = 'check_ghost'
 
 DEFAULT_KEY = "xxxxxxxxxxxxxxxx"
 
@@ -31,14 +31,13 @@ CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Optional(CONF_GATEWAYS, default=[{"sid": None, "key": DEFAULT_KEY}]): cv.ensure_list,
         vol.Optional(CONF_INTERFACE, default='any'): cv.string,
-        vol.Optional(CONF_POLL_MOTION, default=True): cv.boolean,
+        vol.Optional(CONF_CHECK_GHOST, default=False): cv.boolean,
         vol.Optional(CONF_DISCOVERY_RETRY, default=3): cv.positive_int
     })
 }, extra=vol.ALLOW_EXTRA)
 
 XIAOMI_COMPONENTS = ['binary_sensor', 'sensor', 'switch', 'light']
 PY_XIAOMI_GATEWAY = None
-POLL_MOTION = True
 
 # Shortcut for the logger
 _LOGGER = logging.getLogger(__name__)
@@ -50,9 +49,7 @@ def setup(hass, config):
     gateways = config[DOMAIN][CONF_GATEWAYS]
     interface = config[DOMAIN][CONF_INTERFACE]
     discovery_retry = config[DOMAIN][CONF_DISCOVERY_RETRY]
-
-    global POLL_MOTION
-    POLL_MOTION = config[DOMAIN][CONF_POLL_MOTION]
+    check_ghost = config[DOMAIN][CONF_DISCOVERY_RETRY]
 
     for gateway in gateways:
         sid = gateway['sid']
@@ -69,7 +66,7 @@ def setup(hass, config):
             return False
 
     global PY_XIAOMI_GATEWAY
-    PY_XIAOMI_GATEWAY = PyXiaomiGateway(hass, gateways, interface)
+    PY_XIAOMI_GATEWAY = PyXiaomiGateway(hass, gateways, interface, check_ghost)
 
     _LOGGER.info("Expecting %s gateways", len(gateways))
     for _ in range(discovery_retry):
@@ -107,7 +104,7 @@ class PyXiaomiGateway:
 
     gateways = defaultdict(list)
 
-    def __init__(self, hass, gateways_config, interface):
+    def __init__(self, hass, gateways_config, interface, check_ghost):
 
         self.hass = hass
         self._listening = False
@@ -120,6 +117,7 @@ class PyXiaomiGateway:
         self._threads = []
         self._gateways_config = gateways_config
         self._interface = interface
+        self.check_ghost = check_ghost
 
     def discover_gateways(self):
         """Discover gateways using multicast"""
@@ -164,7 +162,7 @@ class PyXiaomiGateway:
 
                 _LOGGER.info('Xiaomi Gateway %s found at IP %s', sid, ip_add)
 
-                self.gateways[ip_add] = XiaomiGateway(ip_add, port, sid, gateway_key, self._socket)
+                self.gateways[ip_add] = XiaomiGateway(ip_add, port, sid, gateway_key, self._socket, self.check_ghost)
 
         except socket.timeout:
             _LOGGER.info("Gateway finding finished in 5 seconds")
@@ -244,7 +242,7 @@ class PyXiaomiGateway:
 class XiaomiGateway:
     """Xiaomi Gateway Component"""
 
-    def __init__(self, ip, port, sid, key, sock):
+    def __init__(self, ip, port, sid, key, sock, check_ghost):
 
         self.ip_add = ip
         self.port = int(port)
@@ -253,7 +251,7 @@ class XiaomiGateway:
         self.devices = defaultdict(list)
         self.ha_devices = defaultdict(list)
         self.token = None
-
+        self.check_ghost = check_ghost
         self._socket = sock
 
         trycount = 5
@@ -388,9 +386,9 @@ class XiaomiDevice(Entity):
         """Initialize the xiaomi device."""
         self._sid = device['sid']
         self._name = '{}_{}'.format(name, self._sid)
+        self.xiaomi_hub = xiaomi_hub
         self.parse_data(device['data'])
         self.parse_voltage(device['data'])
-        self.xiaomi_hub = xiaomi_hub
         self._device_state_attributes = {}
         xiaomi_hub.ha_devices[self._sid].append(self)
 
