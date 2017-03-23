@@ -49,7 +49,7 @@ def setup(hass, config):
     gateways = config[DOMAIN][CONF_GATEWAYS]
     interface = config[DOMAIN][CONF_INTERFACE]
     discovery_retry = config[DOMAIN][CONF_DISCOVERY_RETRY]
-    check_ghost = config[DOMAIN][CONF_DISCOVERY_RETRY]
+    check_ghost = config[DOMAIN][CONF_CHECK_GHOST]
 
     for gateway in gateways:
         sid = gateway['sid']
