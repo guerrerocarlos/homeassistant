@@ -228,7 +228,7 @@ class PyXiaomiGateway:
 
                 cmd = data['cmd']
                 if cmd == 'heartbeat' and data['model'] == 'gateway':
-                    self.token = data['token']
+                    gateway.token = data['token']
                 elif cmd == 'report' or cmd == 'heartbeat':
                     _LOGGER.debug('MCAST (%s) << %s', cmd, data)
                     self.hass.add_job(gateway.push_data, data)
