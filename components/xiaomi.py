@@ -386,9 +386,9 @@ class XiaomiDevice(Entity):
         """Initialize the xiaomi device."""
         self._sid = device['sid']
         self._name = '{}_{}'.format(name, self._sid)
-        self.xiaomi_hub = xiaomi_hub
+        self.xiaomi_hub = xiaomi_hub        
+        self.parse_data(device['data'])
         self._device_state_attributes = {}
-        self.parse_data(device['data'])        
         self.parse_voltage(device['data'])        
         xiaomi_hub.ha_devices[self._sid].append(self)
 
