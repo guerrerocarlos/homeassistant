@@ -103,9 +103,10 @@ class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
                 return False
             self._ghost_checked = False
             self._should_poll = True
-            self._hass.bus.fire('motion', {
-                'entity_id': self.entity_id
-            })
+            if self.entity_id != None:
+                self._hass.bus.fire('motion', {
+                    'entity_id': self.entity_id
+                })
 
             self._no_motion_since = 0
             if self._state:
