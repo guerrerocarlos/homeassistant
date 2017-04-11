@@ -23,7 +23,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 devices.append(XiaomiSensor(device, 'Temperature', 'temperature', gateway))
                 devices.append(XiaomiSensor(device, 'Humidity', 'humidity', gateway))
             elif device['model'] == 'gateway':
-                devices.append(XiaomiSensor(device, 'Illumination', 'illumination', gateway)
+                devices.append(XiaomiSensor(device, 'Illumination', 'illumination', gateway))
     add_devices(devices)
 
 
