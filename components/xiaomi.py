@@ -427,7 +427,7 @@ class XiaomiDevice(Entity):
         voltage = data['voltage']
         voltage = min(voltage, max_voltage)
         voltage = max(voltage, min_voltage)
-        percent = ((max_volt - voltage) / (max_volt - min_volt)) * 100
+        percent = ((voltage - min_voltage) / (max_volt - min_volt)) * 100
         self._device_state_attributes[ATTR_BATTERY_LEVEL] = round(percent)
         return True
             
