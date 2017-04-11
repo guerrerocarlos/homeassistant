@@ -57,14 +57,14 @@ class XiaomiSensor(XiaomiDevice):
         value = data.get(self._data_key)
         if value is None:
             return False
-        if self._data_key == 'temperature' and self.current_value == 100:
+        value = int(value)
+        if self._data_key == 'temperature' and value == 100:
             return False
-        elif self._data_key == 'humidity' and self.current_value == 0:
+        elif self._data_key == 'humidity' and value == 0:
             return False
-        elif self._data_key == 'illumination' and self.current_value == 0:
+        elif self._data_key == 'illumination' and value == 0:
             return False
-        if self._data_key == 'illumination':
-            self.current_value = int(value)
-        elif self._data_key == 'temperature' or 'humidity':
-            self.current_value = int(value) / 100
+        if self._data_key == 'temperature' or 'humidity':
+            value = value / 100
+        self.current_value = value  
         return True
