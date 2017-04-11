@@ -22,6 +22,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             if device['model'] == 'sensor_ht':
                 devices.append(XiaomiSensor(device, 'Temperature', 'temperature', gateway))
                 devices.append(XiaomiSensor(device, 'Humidity', 'humidity', gateway))
+            elif device['model'] == 'gateway':
+                devices.append(XiaomiSensor(device, 'Illumination', 'illumination', gateway)
     add_devices(devices)
 
 
@@ -47,6 +49,8 @@ class XiaomiSensor(XiaomiDevice):
             return TEMP_CELSIUS
         elif self._data_key == 'humidity':
             return '%'
+        elif self._data_key == 'illumination':
+            return 'lm'
 
     def parse_data(self, data):
         """Parse data sent by gateway"""
@@ -57,5 +61,10 @@ class XiaomiSensor(XiaomiDevice):
             return False
         elif self._data_key == 'humidity' and self.current_value == 0:
             return False
-        self.current_value = int(value) / 100
+        elif self._data_key == 'illumination' and self.current_value == 0:
+            return False
+        if self._data_key == 'illumination':
+            self.current_value = int(value)
+        elif self._data_key == 'temperature' or 'humidity':
+            self.current_value = int(value) / 100
         return True
