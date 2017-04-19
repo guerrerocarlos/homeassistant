@@ -42,6 +42,9 @@ PY_XIAOMI_GATEWAY = None
 # Shortcut for the logger
 _LOGGER = logging.getLogger(__name__)
 
+ATTR_RINGTONE_ID = 'ringtone_id'
+ATTR_GW_IP = 'gw_ip'
+ATTR_RINGTONE_VOL = 'ringtone_vol'
 
 def setup(hass, config):
     """Set up the Xiaomi component."""
@@ -91,6 +94,51 @@ def setup(hass, config):
 
     for component in XIAOMI_COMPONENTS:
         discovery.load_platform(hass, component, DOMAIN, {}, config)
+
+    
+    def play_ringtone_service(call):
+        """Service to play ringtone through Gateway."""
+        if call.data.get(ATTR_RINGTONE_ID) is None or call.data.get(ATTR_GW_IP_ADD) is None:
+           _LOGGER.error("Mandatory parameters is not specified")
+           return
+
+        ring_id = int(call.data.get(ATTR_RINGTONE_ID))
+        gw_ip = call.data.get(ATTR_GW_IP)
+
+        if ring_id in [9, 14-19]:
+            _LOGGER.error('Specified mid: %s is not defined in gateway', mid)
+            return
+
+        gw = PY_XIAOMI_GATEWAY.gateways.get(gw_ip)
+        if gw is None:
+            _LOGGER.error('Unknown gateway ip %s', gw_ip)
+            return
+
+        ring_vol = call.data.get(ATTR_RINGTONE_VOL)
+        if ring_vol is None:
+            ringtone = {'mid': ring_id}
+        else:
+            ringtone = {'mid': ring_id, 'vol': int(ring_vol)}
+
+        gw.write_to_hub(gw.sid, **ringtone )
+
+    def stop_ringtone_service(call):
+        """Service to stop playing ringtone on Gateway."""
+        gw_ip_add = call.data.get(ATTR_GW_IP_ADD)
+        if gw_ip is None:
+           _LOGGER.error("Mandatory parameters is not specified")
+           return
+
+        gw = PY_XIAOMI_GATEWAY.gateways.get(gw_ip)
+        if gw is None:
+            _LOGGER.error('Unknown gateway ip %s', gw_ip)
+            return
+
+        ringtone = {'mid': 10000}
+        gw.write_to_hub(gw.sid, **ringtone)
+
+    hass.services.async_register(DOMAIN, 'play_rigtone', play_ringtone_service, description=None, schema=None)
+    hass.services.async_register(DOMAIN, 'stop_rigtone', stop_ringtone_service, description=None, schema=None)
 
     return True
 
@@ -332,10 +380,11 @@ class XiaomiGateway:
             return None
         return resp
 
-    def write_to_hub(self, sid, data_key, datavalue):
+    def write_to_hub(self, sid, **kwargs):
         """Send data to gateway to turn on / off device"""
         data = {}
-        data[data_key] = datavalue
+        for key in kwargs:
+            data[key] = kwargs[key]
         if self.token is None:
             return False
         data['key'] = self._get_key()
