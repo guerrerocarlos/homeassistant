@@ -20,12 +20,15 @@ This is an complete Home Assistant component for Xiaomi Gateway. It allows you t
 - Aqara Wireless Switch (Double)
 - Cube
 - Gateway Light
+- Gateway Sensor
+- Battery
+- Ringtone play
 
 What's not available?
-- Gateway Sensor
+
 - Gateway Radio
 - Power Consumption
-- Battery
+
 
 
 
