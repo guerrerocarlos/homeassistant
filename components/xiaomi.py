@@ -140,8 +140,8 @@ def setup(hass, config):
         else:
             _LOGGER.error('Unknown gateway sid: %s was specified.', gw_sid)
 
-    hass.services.async_register(DOMAIN, 'play_rigtone', play_ringtone_service, description=None, schema=None)
-    hass.services.async_register(DOMAIN, 'stop_rigtone', stop_ringtone_service, description=None, schema=None)
+    hass.services.async_register(DOMAIN, 'play_ringtone', play_ringtone_service, description=None, schema=None)
+    hass.services.async_register(DOMAIN, 'stop_ringtone', stop_ringtone_service, description=None, schema=None)
 
     return True
 
