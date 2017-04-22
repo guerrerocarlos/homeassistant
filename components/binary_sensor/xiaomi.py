@@ -84,7 +84,7 @@ class XiaomiNatgasSensor(XiaomiDevice, BinarySensorDevice):
         """Parse data sent by gateway"""
  
         if DENSITY in data:
-           self._density = int(data.get([DENSITY])           
+           self._density = int(data.get([DENSITY]))
             
         value = data.get(self._data_key)
         if value is None:
