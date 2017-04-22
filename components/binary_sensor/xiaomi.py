@@ -21,6 +21,8 @@ MOTION = 'motion'
 NO_MOTION = 'no_motion'
 ATTR_NO_MOTION_SINCE = 'No motion since'
 
+ATTR_DENSITY = 'Density'
+
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Perform the setup for Xiaomi devices."""
@@ -36,6 +38,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 devices.append(XiaomiDoorSensor(device, gateway))
             elif model == 'smoke':
                 devices.append(XiaomiSmokeSensor(device, gateway))
+            elif model == 'natgas':
+                devices.append(XiaomiGasSensor(device, gateway))
             elif model == 'switch':
                 devices.append(XiaomiButton(device, 'Switch', 'status', hass, gateway))
             elif model == '86sw1':
@@ -47,7 +51,59 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 devices.append(XiaomiCube(device, hass, gateway))
     add_devices(devices)
 
-
+class XiaomiNatgasSensor(XiaomiDevice, BinarySensorDevice):
+    """Representation of a XiaomiNatgasSensor."""
+    
+    DENSITY = 'density'
+ 
+    def __init__(self, device, xiaomi_hub):
+        """Initialize the XiaomiSmokeSensor."""
+        self._state = False
+        self._data_key = 'alarm'
+        self._density = 0
+        XiaomiDevice.__init__(self, device, 'Natgas Sensor', xiaomi_hub)
+ 
+    @property
+    def device_class(self):
+        """Return the class of binary sensor."""
+        return 'gas'
+ 
+    @property
+    def is_on(self):
+        """Return true if sensor is on."""
+        return self._state
+    
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes."""
+        attrs = {ATTR_Density: self._density}
+        attrs.update(super().device_state_attributes)
+        return attrs
+ 
+    def parse_data(self, data):
+        """Parse data sent by gateway"""
+ 
+        if DENSITY in data:
+           self._density = int(data.get([DENSITY])           
+            
+        value = data.get(self._data_key)
+        if value is None:
+            return False
+ 
+        if value == '1':
+            if self._state:
+                return False
+            else:
+                self._state = True
+                return True
+        elif value == '0':
+            if self._state:
+                self._state = False
+                return True
+            else:
+                return False
+    
+    
 class XiaomiMotionSensor(XiaomiDevice, BinarySensorDevice):
     """Representation of a XiaomiMotionSensor."""
 

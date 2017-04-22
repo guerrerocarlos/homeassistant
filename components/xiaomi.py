@@ -324,7 +324,7 @@ class XiaomiGateway:
         _LOGGER.info('Found %s devices', len(sids))
 
         sensors = ['sensor_ht']
-        binary_sensors = ['magnet', 'motion', 'switch', '86sw1', '86sw2', 'cube', 'smoke']
+        binary_sensors = ['magnet', 'motion', 'switch', '86sw1', '86sw2', 'cube', 'smoke', 'natgas']
         switches = ['plug', 'ctrl_neutral1', 'ctrl_neutral2']
         gateway = ['gateway']
 
