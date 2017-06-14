@@ -58,7 +58,7 @@ class XiaomiSensor(XiaomiDevice):
         if value is None:
             return False
         value = int(value)
-        if self._data_key == 'temperature' and value == 100:
+        if self._data_key == 'temperature' and value == 10000:
             return False
         elif self._data_key == 'humidity' and value == 0:
             return False
