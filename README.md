@@ -10,27 +10,35 @@ Description
 ---------------
 This is an complete Home Assistant component for Xiaomi Gateway. It allows you to integrate the following devices into HA
 
+- Temperature and Humidity Sensor
 - Motion Sensor
 - Door and Window Sensor
 - Button
-- Plug
+- Plug aka Socket (ZigBee version, reports power consumed, power load, state and if device in use)
+- Wall Plug (reports power consumed, power load and state)
 - Aqara Wall Switch (Single)
 - Aqara Wall Switch (Double)
 - Aqara Wireless Switch (Single)
 - Aqara Wireless Switch (Double)
 - Cube
-- Gateway Light
-- Gateway Sensor
+- Gas Leak Detector (reports alarm and density)
+- Smoke Detector (reports alarm and density)
+- Gateway (Light, Illumination Sensor, Ringtone play)
 - Battery
-- Ringtone play
 
 What's not available?
 
 - Gateway Radio
-- Power Consumption
-
-
-
+- Gateway Button
+- Door and Window Sensor (new version, square)
+- Button (new version, square)
+- Temperature and Humidity Sensor (new version, square)
+- Motion Sensor (new version with illumination sensor and holder)
+- Intelligent Curtain
+- Aqara Air Conditioning Companion
+- Aqara Intelligent Air Conditioner Controller Hub
+- Decoupled mode of the Aqara Wall Switche (Single & Double)
+- Additional alarm events of the Gas and Smoke Detector: Analog alarm, battery fault alarm (smoke detector only), sensitivity fault alarm, I2C communication failure
 
 Installation (Raspberry Pi)
 ---------------------------
@@ -44,7 +52,7 @@ Installation (Raspberry Pi)
  /srv/homeassistant/homeassistant_venv/lib/python3.4/site-packages/homeassistant/components
  ```
 
-2. Add the following line to the Configuration.yaml. Make sure you're on the latest firmware. You will need to get the Hub's key in order to issue command to the hub like turning on and off plug. Follow the steps here http://bbs.xiaomi.cn/t-13198850
+2. Add the following line to the Configuration.yaml. Make sure you're on the latest firmware. You will need to get the Hub's key in order to issue command to the hub like turning on and off plug. Follow the steps here https://github.com/louisZL/lumi-gateway-local-api/blob/master/device_discover.md
 
  One Gateway
   ```yaml
