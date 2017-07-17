@@ -11,7 +11,7 @@ Description
 This is an complete Home Assistant component for Xiaomi Gateway. It allows you to integrate the following devices into HA
 
 - Temperature and Humidity Sensor (old and new version)
-- Motion Sensor
+- Motion Sensor (old and new version)
 - Door and Window Sensor
 - Button (old and new version)
 - Plug aka Socket (ZigBee version, reports power consumed, power load, state and if device in use)
@@ -32,7 +32,6 @@ What's not available?
 - Gateway Radio
 - Gateway Button
 - Door and Window Sensor (new version, square)
-- Motion Sensor (new version with illumination sensor and holder)
 - Aqara Air Conditioning Companion
 - Aqara Intelligent Air Conditioner Controller Hub
 - Decoupled mode of the Aqara Wall Switche (Single & Double)
