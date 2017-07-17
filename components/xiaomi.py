@@ -352,10 +352,10 @@ class XiaomiGateway:
                         "short_id":resp["short_id"],
                         "data":data}
                     self.devices[device_type].append(xiaomi_device)
-                    _LOGGER.debug('Registering device %s, %s as : %s', sid, model, device_type)
+                    _LOGGER.debug('Registering device %s, %s as: %s', sid, model, device_type)
 
             if not supported:
-                _LOGGER.error('Unsupported devices : %s', model)
+                _LOGGER.error('Unsupported devices: %s', model)
                 continue
         return True
 

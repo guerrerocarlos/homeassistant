@@ -76,7 +76,7 @@ class XiaomiSensor(XiaomiDevice):
             return False
         elif self._data_key == 'pressure' and value == 0:
             return False
-        if self._data_key in ['temperature', 'humidity']:
+        if self._data_key in ['temperature', 'humidity', 'pressure']:
             value = value / 100
         if self._data_key in ['illumination']:
             value = value - 300
