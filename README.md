@@ -10,10 +10,10 @@ Description
 ---------------
 This is an complete Home Assistant component for Xiaomi Gateway. It allows you to integrate the following devices into HA
 
-- Temperature and Humidity Sensor
+- Temperature and Humidity Sensor (old and new version)
 - Motion Sensor
 - Door and Window Sensor
-- Button
+- Button (old and new version)
 - Plug aka Socket (ZigBee version, reports power consumed, power load, state and if device in use)
 - Wall Plug (reports power consumed, power load and state)
 - Aqara Wall Switch (Single)
@@ -24,18 +24,15 @@ This is an complete Home Assistant component for Xiaomi Gateway. It allows you t
 - Gas Leak Detector (reports alarm and density)
 - Smoke Detector (reports alarm and density)
 - Gateway (Light, Illumination Sensor, Ringtone play)
+- Intelligent Curtain
 - Battery
-- Curtain
 
 What's not available?
 
 - Gateway Radio
 - Gateway Button
 - Door and Window Sensor (new version, square)
-- Button (new version, square)
-- Temperature and Humidity Sensor (new version, square)
 - Motion Sensor (new version with illumination sensor and holder)
-- Intelligent Curtain
 - Aqara Air Conditioning Companion
 - Aqara Intelligent Air Conditioner Controller Hub
 - Decoupled mode of the Aqara Wall Switche (Single & Double)
@@ -91,7 +88,7 @@ Installation (Raspberry Pi)
           friendly_name: Door Sensor
   ```
 
-5. Add automation. For the Button and Switch, use the following event. Available click types are 'single', 'double' and 'hold'. For door window sensor and motion sensor, you can use State or Event as trigger
+5. Add automation. For the Button and Switch, use the following event. Available click types are 'single', 'double', 'hold', 'long_click_press' and 'long_click_release'. For door window sensor and motion sensor, you can use State as trigger
   ```yaml
   automation:
   - alias: Turn on Dining Light when click
@@ -114,15 +111,6 @@ Installation (Raspberry Pi)
       entity_id: binary_sensor.motion_sensor_158d000xxxxxc2
       from: 'off'
       to: 'on'
-
-    #trigger for motion sensor using Event
-
-    trigger:
-      platform: event
-      event_type: motion_action
-      event_data:
-          entity_id: binary_sensor.motion_sensor_158d000xxxxxc2
-          action_type: motion # motion / no_motion
   ```
 
   ```yaml
@@ -133,15 +121,6 @@ Installation (Raspberry Pi)
       entity_id: binary_sensor.door_window_sensor_158d000xxxxxc2
       from: 'off'
       to: 'on'
-
-    #trigger for door window sensor using Event
-
-    trigger:
-      platform: event
-      event_type: door_window_action
-      event_data:
-          entity_id: binary_sensor.door_window_sensor_158d000xxxxxc2
-          action_type: open # open / close / no_close
   ```
 
 6. For Cube, use the following trigger. Available actions are flip90, flip180, move, tap_twice, shake_air, swing, alert, free_fall and rotate
