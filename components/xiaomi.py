@@ -324,7 +324,7 @@ class XiaomiGateway:
         _LOGGER.info('Found %s devices', len(sids))
 
         sensors = ['sensor_ht', 'weather.v1']
-        binary_sensors = ['magnet', 'motion', 'switch', 'sensor_switch.aq2', '86sw1', '86sw2', 'cube', 'smoke', 'natgas']
+        binary_sensors = ['magnet', 'motion', 'sensor_motion.aq2', 'switch', 'sensor_switch.aq2', '86sw1', '86sw2', 'cube', 'smoke', 'natgas']
         switches = ['plug', 'ctrl_neutral1', 'ctrl_neutral2', '86plug']
         gateway = ['gateway']
         covers = ['curtain']
@@ -362,6 +362,9 @@ class XiaomiGateway:
                 "data":data}
             if device_type == 'gateway':
                self.devices['light'].append(xiaomi_device)
+               self.devices['sensor'].append(xiaomi_device)
+            elif device_type == 'sensor_motion.aq2':
+               self.devices['binary_sensor'].append(xiaomi_device)
                self.devices['sensor'].append(xiaomi_device)
             else:
                 self.devices[device_type].append(xiaomi_device)

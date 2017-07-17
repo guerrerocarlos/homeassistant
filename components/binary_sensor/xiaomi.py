@@ -35,6 +35,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             model = device['model']
             if model == 'motion':
                 devices.append(XiaomiMotionSensor(device, hass, gateway))
+            elif model == 'sensor_motion.aq2':
+                devices.append(XiaomiMotionSensor(device, hass, gateway))
             elif model == 'magnet':
                 devices.append(XiaomiDoorSensor(device, gateway))
             elif model == 'smoke':
