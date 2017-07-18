@@ -35,7 +35,7 @@ What's not available?
 - Gateway Button
 - Aqara Air Conditioning Companion
 - Aqara Intelligent Air Conditioner Controller Hub
-- Decoupled mode of the Aqara Wall Switche (Single & Double)
+- Decoupled mode of the Aqara Wall Switches (Single & Double)
 - Additional alarm events of the Gas and Smoke Detector: Analog alarm, battery fault alarm (smoke detector only), sensitivity fault alarm, I2C communication failure
 
 Installation (Raspberry Pi)
@@ -54,7 +54,7 @@ Installation (Raspberry Pi)
 
  One Gateway
   ```yaml
- #you can leave sid empty if you only have one gateway
+ # You can leave sid empty if you only have one gateway
  xiaomi:
    gateways:
      - sid:
@@ -63,7 +63,7 @@ Installation (Raspberry Pi)
 
  Multiple Gateway
   ```yaml
- #12 characters sid can be obtained from the gateway's MAC address.
+ # 12 characters sid can be obtained from the gateway's MAC address.
  xiaomi:
    gateways:
      - sid: xxxxxxxxxxxx
@@ -81,46 +81,136 @@ Installation (Raspberry Pi)
   ```yaml
     customize:
       binary_sensor.switch_158d000xxxxxc3:
-          friendly_name: Ktichen Switch
+        friendly_name: Kitchen Switch
       binary_sensor.switch_158d000xxxxxc2:
-          friendly_name: Table Switch
+        friendly_name: Table Switch
       binary_sensor.door_window_sensor_158d000xxxxx7a:
-          friendly_name: Door Sensor
+        friendly_name: Door Sensor
   ```
 
 5. Add automation. For the Button and Switch, use the following event. Available click types are 'single', 'double', 'hold', 'long_click_press' and 'long_click_release'. For door window sensor and motion sensor, you can use State as trigger
   ```yaml
   automation:
-  - alias: Turn on Dining Light when click
-    trigger:
-      platform: event
-      event_type: click
-      event_data:
+    # Trigger for the wireless button with different click types
+
+    - alias: Toggle dining light on single press
+      trigger:
+        platform: event
+        event_type: click
+        event_data:
           entity_id: binary_sensor.switch_158d000xxxxxc2
           click_type: single
-    action:
-      service: switch.toggle
-      entity_id: switch.wall_switch_left_158d000xxxxx01
+      action:
+        service: switch.toggle
+        entity_id: switch.wall_switch_left_158d000xxxxx01
+
+    - alias: Toggle couch light on double click
+      trigger:
+        platform: event
+        event_type: click
+        event_data:
+          entity_id: binary_sensor.switch_158d000xxxxxc2
+          click_type: double
+      action:
+        service: switch.toggle
+        entity_id: switch.wall_switch_right_158d000xxxxx01
+
+    - alias: Let a dog bark on long press
+      trigger:
+        platform: event
+        event_type: click
+        event_data:
+          entity_id: binary_sensor.switch_158d000xxxxxc2
+          click_type: long_click_press
+      action:
+        service: xiaomi.play_ringtone
+        data:
+          gw_sid: xxxxxxxxxxxx
+          ringtone_id: 8
+          ringtone_vol: 8
   ```
 
   ```yaml
-    #trigger for motion sensor using State
+    # Trigger for motion sensor
 
-    trigger:
-      platform: state
-      entity_id: binary_sensor.motion_sensor_158d000xxxxxc2
-      from: 'off'
-      to: 'on'
+    - alias: If there is motion and its dark turn on the gateway light
+      trigger:
+        platform: state
+        entity_id: binary_sensor.motion_sensor_158d000xxxxxc2
+        from: 'off'
+        to: 'on'
+      condition:
+        condition: numeric_state
+        entity_id: sensor.illumination_34ce00xxxx11
+        below: 300
+      action:
+        service: light.turn_on
+        entity_id: light.gateway_light_34ce00xxxx11
+        data:
+          brightness: 5
+
+    - alias: If there no motion for 5 minutes turn off the gateway light
+      trigger:
+        platform: state
+        entity_id: binary_sensor.motion_sensor_158d000xxxxxc2
+        from: 'on'
+        to: 'off'
+        for:
+          minutes: 5
+      action:
+        service: light.turn_off
+        entity_id: light.gateway_light_34ce00xxxx11
   ```
 
   ```yaml
-    #trigger for door window sensor using State
+    # Trigger for door window sensor
 
-    trigger:
-      platform: state
-      entity_id: binary_sensor.door_window_sensor_158d000xxxxxc2
-      from: 'off'
-      to: 'on'
+    - alias: If the window is open turn off the radiator
+      trigger:
+        platform: state
+        entity_id: binary_sensor.door_window_sensor_158d000xxxxxc2
+        from: 'off'
+        to: 'on'
+      action:
+        service: climate.set_operation_mode
+        entity_id: climate.livingroom
+        data:
+          operation_mode: 'Off'
+
+    - alias: If the window is closed for 5 minutes turn on the radiator again
+      trigger:
+        platform: state
+        entity_id: binary_sensor.door_window_sensor_158d000xxxxxc2
+        from: 'on'
+        to: 'off'
+        for:
+          minutes: 5
+      action:
+        service: climate.set_operation_mode
+        entity_id: climate.livingroom
+        data:
+          operation_mode: 'Smart schedule'
+  ```
+
+  ```yaml
+    # Trigger for door window sensor
+
+    - alias: Send notification on fire alarm
+      trigger:
+        platform: state
+        entity_id: binary_sensor.smoke_sensor_158d0001574899
+        from: 'off'
+        to: 'on'
+      action:
+        - service: notify.html5
+          data:
+            title: Fire alarm!
+            message: Fire/Smoke detected!
+        - service: xiaomi.play_ringtone
+          data:
+            gw_sid: xxxxxxxxxxxx
+            ringtone_id: 2
+            ringtone_vol: 100
   ```
 
 6. For Cube, use the following trigger. Available actions are flip90, flip180, move, tap_twice, shake_air, swing, alert, free_fall and rotate
@@ -130,8 +220,8 @@ Installation (Raspberry Pi)
       platform: event
       event_type: cube_action
       event_data:
-          entity_id: binary_sensor.cube_158d000xxxxxc2
-          action_type: flip90
+        entity_id: binary_sensor.cube_158d000xxxxxc2
+        action_type: flip90
  ```
 
 7. Important! Only use this if you have have issue with Socket binding or multicast. Using this when you have no problem with socket or mcast will introduce other issues. Add the IP address of the network interface to the config
