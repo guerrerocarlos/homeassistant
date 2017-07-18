@@ -18,6 +18,8 @@ This is an complete Home Assistant component for Xiaomi Gateway. It allows you t
 - Wall Plug (reports power consumed, power load and state)
 - Aqara Wall Switch (Single)
 - Aqara Wall Switch (Double)
+- Aqara Wall Switch LN (Single)
+- Aqara Wall Switch LN (Double)
 - Aqara Wireless Switch (Single)
 - Aqara Wireless Switch (Double)
 - Cube

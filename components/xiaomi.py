@@ -326,7 +326,7 @@ class XiaomiGateway:
         device_types = {
             'sensor': ['sensor_ht', 'gateway', 'weather.v1', 'sensor_motion.aq2'],
             'binary_sensor': ['magnet', 'sensor_magnet.aq2', 'motion', 'sensor_motion.aq2', 'switch', 'sensor_switch.aq2', '86sw1', '86sw2', 'cube', 'smoke', 'natgas'],
-            'switch': ['plug', 'ctrl_neutral1', 'ctrl_neutral2', '86plug'],
+            'switch': ['plug', 'ctrl_neutral1', 'ctrl_neutral2', 'ctrl_ln1', 'ctrl_ln2', '86plug'],
             'light': ['gateway'],
             'cover': ['curtain']}
 
