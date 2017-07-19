@@ -1,32 +1,24 @@
-"""
-Support for Xiaomi Gateway Light.
-
-Developed by Rave from Lazcad.com
-"""
+"""Support for Xiaomi Gateway Light."""
 import logging
 import struct
 import binascii
-try:
-    from homeassistant.components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
-except ImportError:
-    from custom_components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
-from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_COLOR_TEMP, ATTR_EFFECT,
-    ATTR_RGB_COLOR, ATTR_WHITE_VALUE, ATTR_XY_COLOR, SUPPORT_BRIGHTNESS,
-    SUPPORT_COLOR_TEMP, SUPPORT_EFFECT, SUPPORT_RGB_COLOR, SUPPORT_WHITE_VALUE,
-    Light)
+from homeassistant.components.xiaomi import (PY_XIAOMI_GATEWAY, XiaomiDevice)
+from homeassistant.components.light import (ATTR_BRIGHTNESS, ATTR_RGB_COLOR,
+                                            SUPPORT_BRIGHTNESS,
+                                            SUPPORT_RGB_COLOR, Light)
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Perform the setup for Xiaomi devices."""
     devices = []
-    gateways = PY_XIAOMI_GATEWAY.gateways
-    for (ip_add, gateway) in gateways.items():
+    for (_, gateway) in hass.data[PY_XIAOMI_GATEWAY].gateways.items():
         for device in gateway.devices['light']:
             model = device['model']
             if model == 'gateway':
-                devices.append(XiaomiGatewayLight(device, 'Gateway Light', gateway))
+                devices.append(XiaomiGatewayLight(device, 'Gateway Light',
+                                                  gateway))
     add_devices(devices)
 
 
@@ -36,15 +28,18 @@ class XiaomiGatewayLight(XiaomiDevice, Light):
     def __init__(self, device, name, xiaomi_hub):
         """Initialize the XiaomiGatewayLight."""
         self._data_key = 'rgb'
-
-        self._state = False
         self._rgb = (255, 255, 255)
         self._brightness = 180
 
         XiaomiDevice.__init__(self, device, name, xiaomi_hub)
 
+    @property
+    def is_on(self):
+        """Return true if it is on."""
+        return self._state
+
     def parse_data(self, data):
-        """Parse data sent by gateway"""
+        """Parse data sent by gateway."""
         value = data.get(self._data_key)
         if value is None:
             return False
@@ -52,16 +47,14 @@ class XiaomiGatewayLight(XiaomiDevice, Light):
         if value == 0:
             if self._state:
                 self._state = False
-
             return True
 
         rgbhexstr = "%x" % value
         if len(rgbhexstr) == 7:
-            # fromhex can't deal with odd strings
             rgbhexstr = '0' + rgbhexstr
-
-        if len(rgbhexstr) != 8:
-            _LOGGER.error('Light RGB data error. Must be 8 characters. Received: %s', rgbhexstr)
+        elif len(rgbhexstr) != 8:
+            _LOGGER.error('Light RGB data error.'
+                          ' Must be 8 characters. Received: %s', rgbhexstr)
             return False
 
         rgbhex = bytes.fromhex(rgbhexstr)
@@ -85,11 +78,6 @@ class XiaomiGatewayLight(XiaomiDevice, Light):
         return self._rgb
 
     @property
-    def is_on(self):
-        """Return true if light is on."""
-        return self._state
-
-    @property
     def supported_features(self):
         """Return the supported features."""
         return SUPPORT_BRIGHTNESS | SUPPORT_RGB_COLOR
@@ -106,10 +94,10 @@ class XiaomiGatewayLight(XiaomiDevice, Light):
         rgbhex = binascii.hexlify(struct.pack('BBBB', *rgba)).decode("ASCII")
         rgbhex = int(rgbhex, 16)
 
-        if self.xiaomi_hub.write_to_hub(self._sid, **{self._data_key: rgbhex}):
+        if self._write_to_hub(self._sid, **{self._data_key: rgbhex}):
             self._state = True
 
     def turn_off(self, **kwargs):
         """Turn the light off."""
-        if self.xiaomi_hub.write_to_hub(self._sid, **{self._data_key: 0}):
+        if self._write_to_hub(self._sid, **{self._data_key: 0}):
             self._state = False
