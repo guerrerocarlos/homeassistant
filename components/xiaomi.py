@@ -114,7 +114,7 @@ def setup(hass, config):
         else:
             ringtone = {'mid': ring_id, 'vol': int(ring_vol)}
 
-        gw_sid = call.data.get(ATTR_GW_SID)
+        gw_sid = call.data.get(ATTR_GW_SID).replace(":", "").lower()
 
         gateways = PY_XIAOMI_GATEWAY.gateways
         for (ip_add, gateway) in gateways.items():
@@ -130,6 +130,8 @@ def setup(hass, config):
         if gw_sid is None:
            _LOGGER.error("Mandatory parameters is not specified.")
            return
+
+        gw_sid = gw_sid.replace(":", "").lower()
 
         gateways = PY_XIAOMI_GATEWAY.gateways
         for (ip_add, gateway) in gateways.items():
