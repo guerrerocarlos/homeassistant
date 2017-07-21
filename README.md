@@ -1,4 +1,13 @@
-# HomeAssistant Xiaomi Hub Component by Rave (Lazcad)
+# This component is integrated in Home Assistant from version 0.50. I would recommend that you stop using the custom component. 
+
+**One breaking change is that I have replaced `sid` with the mac address:**
+
+    xiaomi:
+    gateways:
+    - mac:
+      key: xxxxxxxxxxxxxxxx
+
+`mac` can be both the mac address (with colons) and the old `sid` format. 
 
 Credits
 ---------------
