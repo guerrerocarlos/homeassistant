@@ -4,14 +4,15 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
 from homeassistant.helpers.entity import Entity
-from homeassistant.const import ATTR_BATTERY_LEVEL, EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import (ATTR_BATTERY_LEVEL, EVENT_HOMEASSISTANT_STOP,
+                                 CONF_MAC)
 
 
 REQUIREMENTS = ['https://github.com/Danielhiversen/PyXiaomiGateway/archive/'
-                '877faec36e1bfa4177cae2a0d4f49570af083e1d.zip#'
-                'PyXiaomiGateway==0.1.0']
+                'aa9325fe6fdd62a8ef8c9ca1dce31d3292f484bb.zip#'
+                'PyXiaomiGateway==0.2.0']
 
-ATTR_GW_SID = 'gw_sid'
+ATTR_GW_MAC = 'gw_mac'
 ATTR_RINGTONE_ID = 'ringtone_id'
 ATTR_RINGTONE_VOL = 'ringtone_vol'
 CONF_DISCOVERY_RETRY = 'discovery_retry'
@@ -25,12 +26,11 @@ def _validate_conf(config):
     """Validate a list of devices definitions."""
     res_config = []
     for gw_conf in config:
-        sid = gw_conf.get('sid')
-        if sid is not None:
-            gw_conf['sid'] = sid.replace(":", "").lower()
-            if len(sid) != 12:
-                raise vol.Invalid('Invalid sid %s.'
-                                  ' Sid must be 12 characters', sid)
+        res_gw_conf = {'sid': gw_conf.get(CONF_MAC)}
+        if res_gw_conf['sid'] is not None:
+            res_gw_conf['sid'] = res_gw_conf['sid'].replace(":", "").lower()
+            if len(res_gw_conf['sid']) != 12:
+                raise vol.Invalid('Invalid mac address', gw_conf.get(CONF_MAC))
         key = gw_conf.get('key')
         if key is None:
             _LOGGER.warning(
@@ -39,13 +39,14 @@ def _validate_conf(config):
         elif len(key) != 16:
             raise vol.Invalid('Invalid key %s.'
                               ' Key must be 16 characters', key)
-        res_config.append(gw_conf)
+        res_gw_conf['key'] = key
+        res_config.append(res_gw_conf)
     return res_config
 
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
-        vol.Optional(CONF_GATEWAYS, default=[{"sid": None, "key": None}]):
+        vol.Optional(CONF_GATEWAYS, default=[{CONF_MAC: None, "key": None}]):
             vol.All(cv.ensure_list, _validate_conf),
         vol.Optional(CONF_INTERFACE, default='any'): cv.string,
         vol.Optional(CONF_DISCOVERY_RETRY, default=3): cv.positive_int
@@ -89,12 +90,13 @@ def setup(hass, config):
 
     def play_ringtone_service(call):
         """Service to play ringtone through Gateway."""
-        if call.data.get(ATTR_RINGTONE_ID) is None \
-                or call.data.get(ATTR_GW_SID) is None:
+        ring_id = call.data.get(ATTR_RINGTONE_ID)
+        gw_sid = call.data.get(ATTR_GW_MAC)
+        if ring_id is None or gw_sid is None:
             _LOGGER.error("Mandatory parameters is not specified.")
             return
 
-        ring_id = int(call.data.get(ATTR_RINGTONE_ID))
+        ring_id = int(ring_id)
         if ring_id in [9, 14-19]:
             _LOGGER.error('Specified mid: %s is not defined in gateway.',
                           ring_id)
@@ -106,7 +108,7 @@ def setup(hass, config):
         else:
             ringtone = {'mid': ring_id, 'vol': int(ring_vol)}
 
-        gw_sid = call.data.get(ATTR_GW_SID)
+        gw_sid = gw_sid.replace(":", "").lower()
 
         for (_, gateway) in hass.data[PY_XIAOMI_GATEWAY].gateways.items():
             if gateway.sid == gw_sid:
@@ -117,12 +119,13 @@ def setup(hass, config):
 
     def stop_ringtone_service(call):
         """Service to stop playing ringtone on Gateway."""
-        gw_sid = call.data.get(ATTR_GW_SID)
+        gw_sid = call.data.get(ATTR_GW_MAC)
         if gw_sid is None:
             _LOGGER.error("Mandatory parameter (%s) is not specified.",
-                          ATTR_GW_SID)
+                          ATTR_GW_MAC)
             return
 
+        gw_sid = gw_sid.replace(":", "").lower()
         for (_, gateway) in hass.data[PY_XIAOMI_GATEWAY].gateways.items():
             if gateway.sid == gw_sid:
                 ringtone = {'mid': 10000}
