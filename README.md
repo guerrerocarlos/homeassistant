@@ -3,9 +3,9 @@
 **One breaking change is that I have replaced `sid` with the mac address:**
 
     xiaomi:
-    gateways:
-    - mac:
-      key: xxxxxxxxxxxxxxxx
+      gateways:
+        - mac:
+          key: xxxxxxxxxxxxxxxx
 
 `mac` can be both the mac address (with colons) and the old `sid` format. 
 
