@@ -225,6 +225,31 @@ Installation (Raspberry Pi)
             ringtone_id: 2
             ringtone_vol: 100
   ```
+   
+  rintone_ids: 
+                                                0="police car 1",
+                                                1="police car 2",
+                                                2="accident",
+                                                3="countdown", 
+                                                4="ghost",
+                                                5="sniper rifle",
+                                                6="battle",
+                                                7="air raid",
+                                                8="bark", 
+                                                10="doorbell",
+                                                11="knock at a door",
+                                                12="amuse",
+                                                13="alarm clock",
+                                                20="mimix",
+                                                21="enthusuastic",
+                                                22="guitar classic",
+                                                23="ice world piano", 
+                                                24="leisure time", 
+                                                25="child hood", 
+                                                26="morning stream liet", 
+                                                27="music box", 
+                                                28="orange", 
+                                                29="thinker"
 
 6. For Cube, use the following trigger. Available actions are flip90, flip180, move, tap_twice, shake_air, swing, alert, free_fall and rotate
 
